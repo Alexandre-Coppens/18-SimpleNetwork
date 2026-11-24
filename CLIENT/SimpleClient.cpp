@@ -64,13 +64,11 @@ std::string strPort;
  	int byteSent = SDLNet_TCP_Send(clientSocket, _message.c_str(), _message.length() + 1);
  	if (byteSent != _message.length() + 1)
  	{
- 		NewLogMessage(Error, "Error: SDLNet_TCP_Send error: " + to_string(byteSent));
- 		SDLNet_TCP_Close(clientSocket);
+ 		NewLogMessage(Error, "Error: SDLNet_TCP_Send error: " + to_string(*SDLNet_GetError()));
  		return;
  	}
  	
- 	NewLogMessage(Info, "Sent: " + byteSent );
- 	SDLNet_TCP_Close(clientSocket);
+ 	NewLogMessage(Info, "Sent: " + to_string(byteSent) );
  	return;
  }
 

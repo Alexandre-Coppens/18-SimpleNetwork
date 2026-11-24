@@ -2,6 +2,8 @@
 #include <SDL_net.h>
 #include <iostream>
 #include <string>
+#include <thread>
+#include <vector>
 using namespace std;
 
 IPaddress ip;
@@ -64,25 +66,37 @@ int main(int argc, char* argv[]) {
 	cout << "Server Online!\n";
 	
 	TCPsocket clientSocket;
+	std::vector<std::thread> clientThreads;
+	clientThreads.reserve(128);
 	while (loop)
 	{
+		SDLNet_SocketSet set = SDLNet_AllocSocketSet(clientThreads.capacity());
 		clientSocket = SDLNet_TCP_Accept(serverSocket);
 		if (clientSocket)
 		{
 			cout << "Client Connected.." << endl;
-			char buffer[1024];
-			int bytes = SDLNet_TCP_Recv(clientSocket, buffer, sizeof(buffer));
-			if (bytes > 0)
-			{
-				cout << buffer << endl;
-			}
+			SDLNet_TCP_AddSocket(set, clientSocket);
+			clientThreads.emplace_back([clientSocket, set]()
+				{
+					char buffer[1024];
+					while (true)
+					{
+						if (SDLNet_CheckSockets(set, 0) == -1)
+						{
+							cout << "Client Disconnected.." << endl;
+							return;
+						}
+						int bytes = SDLNet_TCP_Recv(clientSocket, buffer, sizeof(buffer));
+						if (bytes > 0)
+						{
+							cout << buffer << endl;
+						}
+					}
+				});
+			
 		}
 	}
 
 	cout << "Thank you for using ChArtFX !\n";
 	return 0;
 }
-
-
-
-	
